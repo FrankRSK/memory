@@ -1,0 +1,10 @@
+Tauche ein in unser fesselndes Memory-Spiel und stelle dein Gedächtnis auf die Probe! Finde alle Paare, indem du Karten aufdeckst und dir ihre Positionen merkst.
+
+So funktioniert's:
+
+- Wähle zu Beginn deine bevorzugte Spielfeldgröße (von 4x4 bis 8x8 Karten).
+- Decke nacheinander zwei Karten auf. Wenn sie das gleiche Symbol zeigen, bleiben sie aufgedeckt.
+- Sind die Symbole unterschiedlich, drehen sich die Karten nach kurzer Zeit wieder um.
+- Behalte die aufgedeckten Symbole im Kopf, um die passenden Paare zu finden.
+
+Das Spiel zählt deine Züge und misst die Zeit, die du zum Lösen des Spielfelds benötigst. Außerdem hörst du Soundeffekte bei jedem Karten-Flip und eine besondere Melodie, wenn du alle Paare gefunden hast. Schaffst du es, das Spiel mit den wenigsten Zügen und in kürzester Zeit abzuschließen?
