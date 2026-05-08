@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory-Spiel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .game-container {
+            text-align: center;
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 2px 2px 4px rgba(0,0,0,0.3), 0 0 10px rgba(255,255,255,0.2); }
+            to { text-shadow: 2px 2px 4px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.4); }
+        }
+
+        .controls {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .size-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .size-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .size-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .size-btn.active {
+            background: rgba(255,255,255,0.4);
+            border-color: rgba(255,255,255,0.6);
+            transform: scale(1.1);
+        }
+
+        .new-game-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .new-game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .stat {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .game-board {
+            display: grid;
+            gap: 10px;
+            justify-content: center;
+            margin: 0 auto;
+            max-width: min(80vw, 80vh);
+        }
+
+        .card {
+            aspect-ratio: 1;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.6s ease;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card.matched {
+            animation: matched 0.6s ease;
+            transform: scale(1.1) rotateY(180deg);
+        }
+
+        .card.matched .card-front {
+            background: linear-gradient(145deg, #4ecdc4, #44a08d);
+        }
+
+        .card.wrong {
+            animation: shake 0.5s ease;
+        }
+
+        .card.wrong .card-front {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+        }
+
+        .card-back {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            font-size: 1.5em;
+            transform: rotateY(0deg);
+        }
+
+        .card-front {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            font-size: 3em;
+            transform: rotateY(180deg);
+        }
+
+        .card-image {
+            width: 80%;
+            height: 80%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        @keyframes matched {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1.1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .victory {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .victory-content {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            animation: slideIn 0.5s ease;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px) scale(0.8); }
+            to { transform: translateY(0) scale(1); }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .controls { flex-direction: column; gap: 15px; }
+            .stats { flex-direction: column; gap: 10px; }
+            .card { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎮 Memory-Spiel</h1>
+        
+        <div class="controls">
+            <div class="size-selector">
+                <span>Spielfeldgröße:</span>
+                <button class="size-btn active" data-size="4">4×4</button>
+                <button class="size-btn" data-size="5">5×5</button>
+                <button class="size-btn" data-size="6">6×6</button>
+                <button class="size-btn" data-size="7">7×7</button>
+                <button class="size-btn" data-size="8">8×8</button>
+            </div>
+            <button class="new-game-btn" onclick="newGame()">Neues Spiel</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                Züge: <span id="moves">0</span>
+            </div>
+            <div class="stat">
+                Zeit: <span id="time">00:00</span>
+            </div>
+            <div class="stat">
+                Paare: <span id="pairs">0</span>/<span id="total-pairs">0</span>
+            </div>
+        </div>
+
+        <div class="game-board" id="gameBoard"></div>
+    </div>
+
+    <script>
+        class MemoryGame {
+            constructor() {
+                this.size = 4;
+                this.cards = [];
+                this.flippedCards = [];
+                this.matches = 0;
+                this.moves = 0;
+                this.startTime = null;
+                this.timer = null;
+                this.isProcessing = false;
+                
+                // Hier können Sie Ihre eigenen Bilder einfügen
+                // Ersetzen Sie die URLs durch Ihre eigenen Bildpfade
+                this.images = [
+                    '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
+                    '🐸', '🐵', '🐧', '🐦', '🦋', '🐛', '🐝', '🐞',
+                    '🌸', '🌺', '🌻', '🌷', '🌹', '🌼', '💐', '🌾',
+                    '🍎', '🍊', '🍋', '🍌', '🍓', '🍑', '🍒', '🥝'
+                ];
+                
+                this.initGame();
+                this.bindEvents();
+                this.createAudioContext();
+            }
+
+            createAudioContext() {
+                // Einfache Sound-Effekte mit Web Audio API
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            playSound(frequency, duration, type = 'sine') {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+
+            bindEvents() {
+                document.querySelectorAll('.size-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelector('.size-btn.active').classList.remove('active');
+                        e.target.classList.add('active');
+                        this.size = parseInt(e.target.dataset.size);
+                        this.newGame();
+                    });
+                });
+            }
+
+            initGame() {
+                this.createBoard();
+                this.updateStats();
+            }
+
+            createBoard() {
+                const board = document.getElementById('gameBoard');
+                const totalCards = this.size * this.size;
+                const pairs = Math.floor(totalCards / 2);
+                
+                // Prüfen ob ungerade Anzahl von Karten
+                const needsExtraCard = totalCards % 2 !== 0;
+                
+                board.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
+                board.innerHTML = '';
+                
+                // Karten-Array erstellen
+                this.cards = [];
+                const cardSymbols = [];
+                
+                // Paare hinzufügen
+                for (let i = 0; i < pairs; i++) {
+                    const symbol = this.images[i % this.images.length];
+                    cardSymbols.push(symbol, symbol);
+                }
+                
+                // Bei ungerader Anzahl eine einzelne Karte hinzufügen
+                if (needsExtraCard) {
+                    cardSymbols.push(this.images[pairs % this.images.length]);
+                }
+                
+                // Karten mischen
+                this.shuffleArray(cardSymbols);
+                
+                // Karten erstellen
+                cardSymbols.forEach((symbol, index) => {
+                    const card = this.createCard(symbol, index);
+                    board.appendChild(card);
+                    this.cards.push({
+                        element: card,
+                        symbol: symbol,
+                        id: index,
+                        isFlipped: false,
+                        isMatched: false
+                    });
+                });
+
+                document.getElementById('total-pairs').textContent = pairs;
+            }
+
+            createCard(symbol, id) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.id = id;
+                
+                card.innerHTML = `
+                    <div class="card-face card-back">?</div>
+                    <div class="card-face card-front">
+                        ${this.isImageUrl(symbol) ? 
+                            `<img src="${symbol}" class="card-image" alt="Memory Card">` : 
+                            symbol
+                        }
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => this.flipCard(id));
+                
+                return card;
+            }
+
+            isImageUrl(str) {
+                // Einfache Prüfung ob es sich um eine URL handelt
+                return str.startsWith('http') || str.startsWith('./') || str.startsWith('/') || str.includes('.');
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            flipCard(id) {
+                if (this.isProcessing) return;
+                
+                const card = this.cards[id];
+                if (card.isFlipped || card.isMatched) return;
+                
+                // Sound für Karten-Flip
+                this.playSound(800, 0.1);
+                
+                card.element.classList.add('flipped');
+                card.isFlipped = true;
+                this.flippedCards.push(card);
+                
+                if (!this.startTime) {
+                    this.startTime = Date.now();
+                    this.startTimer();
+                }
+                
+                if (this.flippedCards.length === 2) {
+                    this.moves++;
+                    this.updateStats();
+                    this.checkMatch();
+                }
+            }
+
+            checkMatch() {
+                this.isProcessing = true;
+                const [card1, card2] = this.flippedCards;
+                
+                setTimeout(() => {
+                    if (card1.symbol === card2.symbol) {
+                        // Match gefunden
+                        this.playSound(1200, 0.3, 'square');
+                        
+                        card1.element.classList.add('matched');
+                        card2.element.classList.add('matched');
+                        card1.isMatched = true;
+                        card2.isMatched = true;
+                        
+                        this.matches++;
+                        this.updateStats();
+                        
+                        if (this.checkWin()) {
+                            setTimeout(() => this.showVictory(), 500);
+                        }
+                    } else {
+                        // Kein Match
+                        this.playSound(300, 0.2, 'sawtooth');
+                        
+                        card1.element.classList.add('wrong');
+                        card2.element.classList.add('wrong');
+                        
+                        setTimeout(() => {
+                            card1.element.classList.remove('flipped', 'wrong');
+                            card2.element.classList.remove('flipped', 'wrong');
+                            card1.isFlipped = false;
+                            card2.isFlipped = false;
+                        }, 1000);
+                    }
+                    
+                    this.flippedCards = [];
+                    this.isProcessing = false;
+                }, 1000);
+            }
+
+            checkWin() {
+                const totalPairs = Math.floor((this.size * this.size) / 2);
+                return this.matches >= totalPairs;
+            }
+
+            showVictory() {
+                clearInterval(this.timer);
+                const timeStr = document.getElementById('time').textContent;
+                
+                // Victory Sound
+                this.playVictorySound();
+                
+                const victoryDiv = document.createElement('div');
+                victoryDiv.className = 'victory';
+                victoryDiv.innerHTML = `
+                    <div class="victory-content">
+                        <h2>🎉 Herzlichen Glückwunsch! 🎉</h2>
+                        <p>Sie haben gewonnen!</p>
+                        <p>Zeit: ${timeStr}</p>
+                        <p>Züge: ${this.moves}</p>
+                        <button class="new-game-btn" onclick="this.parentElement.parentElement.remove(); newGame();" style="margin-top:20px;">
+                            Neues Spiel
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(victoryDiv);
+                this.createConfetti();
+            }
+
+            playVictorySound() {
+                // Sieges-Melodie
+                const notes = [523, 659, 784, 1047];
+                notes.forEach((freq, i) => {
+                    setTimeout(() => {
+                        this.playSound(freq, 0.3, 'sine');
+                    }, i * 200);
+                });
+            }
+
+            createConfetti() {
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'];
+                
+                for (let i = 0; i < 50; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.className = 'confetti';
+                        confetti.style.left = Math.random() * 100 + '%';
+                        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                        confetti.style.animationDelay = Math.random() * 3 + 's';
+                        document.body.appendChild(confetti);
+                        
+                        setTimeout(() => confetti.remove(), 3000);
+                    }, i * 100);
+                }
+            }
+
+            startTimer() {
+                this.timer = setInterval(() => {
+                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                    const seconds = (elapsed % 60).toString().padStart(2, '0');
+                    document.getElementById('time').textContent = `${minutes}:${seconds}`;
+                }, 1000);
+            }
+
+            updateStats() {
+                document.getElementById('moves').textContent = this.moves;
+                document.getElementById('pairs').textContent = this.matches;
+            }
+
+            newGame() {
+                clearInterval(this.timer);
+                this.matches = 0;
+                this.moves = 0;
+                this.startTime = null;
+                this.flippedCards = [];
+                this.isProcessing = false;
+                
+                document.getElementById('time').textContent = '00:00';
+                
+                this.createBoard();
+                this.updateStats();
+            }
+        }
+
+        // Spiel initialisieren
+        let game = new MemoryGame();
+
+        function newGame() {
+            game.newGame();
+        }
+
+        // Sound aktivieren bei ersten Klick
+        document.addEventListener('click', function initAudio() {
+            if (game.audioContext.state === 'suspended') {
+                game.audioContext.resume();
+            }
+            document.removeEventListener('click', initAudio);
+        }, { once: true });
+    </script>
+</body>
+</html>
